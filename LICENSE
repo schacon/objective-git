@@ -1,0 +1,6 @@
+I'm trying to figure out the license right now.  Currently, some of the code is from a GPL project,
+so until I get permission, this has to be GPLd, but eventually it will have to be MIT or LGPL.  If 
+neccesary, I will rewrite the borrowed code to make that happen.
+
+Current (temporary) license:
+http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
