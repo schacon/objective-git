@@ -1,0 +1,20 @@
+Objective Git
+===================
+
+This is a implementation of Git in Objective-C, for embedding in Cocoa
+and iPhone applications.
+
+Initially, it is meant to provide basic read and write access to loose 
+and packed objects, and to provide an input stream handler that can negotiate 
+the server side of the git client/server protocol.
+
+
+Credits
+===================
+A bit of this code is borrowed from the Git.git project and the NSData 
+compression stuff was borrowed from the Etoile framework.
+
+
+Authors
+===================
+Scott Chacon
