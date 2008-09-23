@@ -171,13 +171,25 @@
 	if((type == OBJ_COMMIT) || (type == OBJ_TREE) || (type == OBJ_BLOB) || (type == OBJ_TAG)) {
 		NSData *objectData;
 		objectData = [self readData:size];
-		[gitRepo writeObject:objectData withType:type withSize:size];
+		[gitRepo writeObject:objectData withType:[self typeString:type] withSize:size];
 		// TODO : check saved delta objects
 	} else if ((type == OBJ_REF_DELTA) || (type == OBJ_OFS_DELTA)) {
 		NSLog(@"NO SUPPORT FOR DELTAS YET");
 	} else {
 		NSLog(@"bad object type %d", type);
 	}
+}
+
+- (NSString *) typeString:(int)type {
+	if (type == OBJ_COMMIT) 
+		return @"commit";
+	if (type == OBJ_TREE) 
+		return @"tree";
+	if (type == OBJ_BLOB)
+		return @"blob";
+	if (type == OBJ_TAG)
+		return @"tag";
+	return @"";
 }
 
 - (NSData *) readData:(int)size {
