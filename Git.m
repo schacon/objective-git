@@ -36,12 +36,49 @@
 	return YES;
 }
 
+- (NSArray *) getAllRefs 
+{
+	BOOL isDir=NO;
+	NSMutableArray *refsFinal = [[NSMutableArray alloc] init];
+	NSString *tempRef, *thisSha;
+	NSString *refsPath = [gitDirectory stringByAppendingPathComponent:@"refs"];
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	if ([fileManager fileExistsAtPath:refsPath isDirectory:&isDir] && isDir) {
+		NSEnumerator *e = [[fileManager subpathsAtPath:refsPath] objectEnumerator];
+		NSString *thisRef;
+		while ( (thisRef = [e nextObject]) ) {
+			tempRef = [refsPath stringByAppendingPathComponent:thisRef];
+			thisRef = [@"refs" stringByAppendingPathComponent:thisRef];
+
+			if ([fileManager fileExistsAtPath:tempRef isDirectory:&isDir] && !isDir) {
+				thisSha = [NSString stringWithContentsOfFile:tempRef encoding:NSASCIIStringEncoding error:nil];
+				[refsFinal addObject:[NSArray arrayWithObjects:thisRef,thisSha,nil]];
+			}
+		}
+	}
+	return refsFinal;
+}
+
+- (void) updateRef:(NSString *)refName toSha:(NSString *)toSha
+{
+	NSFileManager *fm = [NSFileManager defaultManager];
+	NSString *refPath = [gitDirectory stringByAppendingPathComponent:refName];
+	[fm createFileAtPath:refPath contents:[NSData dataWithBytes:[toSha UTF8String] length:[toSha length]] attributes:nil];
+}
+
 - (void) initGitRepo {
 	NSFileManager *fm = [NSFileManager defaultManager];
 	[fm createDirectoryAtPath:gitDirectory attributes:nil];
 
 	//NSLog(@"Dir Created: %@ %d", gitDirectory, [gitDirectory length]);
-	
+	NSString *config = @"[core]\n\trepositoryformatversion = 0\n\tfilemode = true\n\tbare = true\n\tlogallrefupdates = true\n";
+	NSString *configFile = [gitDirectory stringByAppendingPathComponent:@"config"];
+	[fm createFileAtPath:configFile contents:[NSData dataWithBytes:[config UTF8String] length:[config length]] attributes:nil];
+
+	NSString *head = @"ref: refs/heads/master\n";
+	NSString *headFile = [gitDirectory stringByAppendingPathComponent:@"HEAD"];
+	[fm createFileAtPath:headFile contents:[NSData dataWithBytes:[head UTF8String] length:[head length]] attributes:nil];
+
 	[fm createDirectoryAtPath:[gitDirectory stringByAppendingPathComponent:@"refs"] attributes:nil];
 	[fm createDirectoryAtPath:[gitDirectory stringByAppendingPathComponent:@"refs/heads"] attributes:nil];
 	[fm createDirectoryAtPath:[gitDirectory stringByAppendingPathComponent:@"refs/tags"] attributes:nil];

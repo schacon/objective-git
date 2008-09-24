@@ -4,7 +4,7 @@
 //
 
 #define NULL_SHA @"0000000000000000000000000000000000000000"
-#define CAPABILITIES @" "
+#define CAPABILITIES @" report-status delete-refs "
 
 #define OBJ_NONE	0
 #define OBJ_COMMIT	1
@@ -61,14 +61,62 @@
 	[gitRepo openRepo:dir];
 	
 	if([command isEqualToString: @"git-receive-pack"]) {		// git push  //
-		NSLog(@"RECEIVE-PACK");
 		[self receivePack:repository];
 	} else if ([command isEqualToString: @"git-upload-pack"]) {	// git fetch //
-		NSLog(@"UPLOAD-PACK not implemented yet");
-		//[self upload-pack:repository];
+		[self uploadPack:repository];
 	}
 
 }
+
+/*** UPLOAD-PACK FUNCTIONS ***/
+
+- (void) uploadPack:(NSString *)repositoryName {
+	[self sendRefs];
+	[self receiveNeeds];
+	[self uploadPackFile];
+}
+
+- (void) receiveNeeds
+{
+	NSLog(@"recieve needs");
+	NSString *data, *cmd, *sha;
+	NSArray *values;
+	NSMutableArray *needRefs = [[NSMutableArray alloc] init];
+
+	while(![(data = [self packetReadLine]) isEqualToString:@"done\n"]) {
+		if([data length] > 40) {
+			NSLog(@"data line: %@", data);
+			
+			values = [data componentsSeparatedByString:@" "];
+			cmd	= [values objectAtIndex: 0];			
+			sha	= [values objectAtIndex: 1];
+			
+			[needRefs addObject:values];
+		}
+	}
+	
+	//puts @session.recv(9)
+	NSLog(@"need refs:%@", needRefs);
+	NSLog(@"sending nack");
+	[self sendNack];
+}
+
+- (void) uploadPackFile
+{
+	NSLog(@"upload packfile");
+}
+
+- (void) sendNack
+{
+	[self sendPacket:@"0007NAK"];
+}
+
+
+/*** UPLOAD-PACK FUNCTIONS END ***/
+
+
+
+/*** RECEIVE-PACK FUNCTIONS ***/
 
 /*
  * handles a push request - this involves validating the request,
@@ -79,7 +127,7 @@
  */
 - (void) receivePack:(NSString *)repositoryName {
 	capabilitiesSent = 0;
-
+	
 	[gitRepo ensureGitPath];
 	
 	[self sendRefs];
@@ -88,19 +136,20 @@
 	[self writeRefs];
 }
 
-
-/*** RECEIVE-PACK FUNCTIONS ***/
-
 - (void) sendRefs {
 	NSLog(@"send refs");
 
-	// get refs from gitRepo		//
-	// foreach ref, send to client	//
-	/*
-	 refs.each do |ref|
-	 send_ref(ref[1], ref[0])
-	 end
-	 */
+	NSArray *refs = [gitRepo getAllRefs];
+	NSLog(@"refs: %@", refs);
+	
+	NSEnumerator *e = [refs objectEnumerator];
+	NSString *refName, *shaValue;
+	NSArray *thisRef;
+	while ( (thisRef = [e nextObject]) ) {
+		refName  = [thisRef objectAtIndex:0];
+		shaValue = [thisRef objectAtIndex:1];
+		[self sendRef:refName sha:shaValue];
+	}
 
 	// send capabilities and null sha to client if no refs //
 	if(!capabilitiesSent)
@@ -113,7 +162,7 @@
 	if(capabilitiesSent) 
 		sendData = [[NSString alloc] initWithFormat:@"%@ %@\n", shaString, refName];
 	else
-		sendData = [[NSString alloc] initWithFormat:@"%@ %@%c%@\n", shaString, refName, 0, CAPABILITIES];
+		sendData = [[NSString alloc] initWithFormat:@"%@ %@\0%@\n", shaString, refName, CAPABILITIES];
 	[self writeServer:sendData];
 	capabilitiesSent = 1;
 }
@@ -122,9 +171,10 @@
 	NSString *data;
 	NSLog(@"read refs");
 	data = [self packetReadLine];
+	NSMutableArray *refs = [[NSMutableArray alloc] init];
 	while([data length] > 0) {
 		NSArray  *values  = [data componentsSeparatedByString:@" "];
-		[refsRead addObject: values];  // save the refs for writing later
+		[refs addObject: values];  // save the refs for writing later
 		
 		/* DEBUGGING */
 		NSLog(@"ref: [%@ : %@ : %@]", [values objectAtIndex: 0], \
@@ -132,6 +182,7 @@
 		
 		data = [self packetReadLine];
 	}
+	refsRead = [NSArray arrayWithArray:refs];
 }
 
 /*
@@ -390,7 +441,10 @@
 	
 	entries = (inEntries[0] << 24) | (inEntries[1] << 16) | (inEntries[2] << 8) | inEntries[3];
 	version = (inVer[0] << 24) | (inVer[1] << 16) | (inVer[2] << 8) | inVer[3];
-	return entries;
+	if(version == 2)
+		return entries;
+	else
+		return 0;
 }
 
 /*
@@ -398,6 +452,16 @@
  */
 - (void) writeRefs {
 	NSLog(@"write refs");
+	NSEnumerator *e = [refsRead objectEnumerator];
+	NSArray *thisRef;
+	NSString *toSha, *refName;
+	
+	while ( (thisRef = [e nextObject]) ) {
+		NSLog(@"ref: %@", thisRef);
+		toSha   = [thisRef objectAtIndex:1];
+		refName = [thisRef objectAtIndex:2];
+		[gitRepo updateRef:refName toSha:toSha];
+	}	
 }
 
 
@@ -408,7 +472,7 @@
 }
 
 - (void) sendPacket:(NSString *)dataWrite {
-	NSLog(@"send:[%@]", dataWrite);
+	//NSLog(@"send:[%@]", dataWrite);
 	int len = [dataWrite length];
 	uint8_t buffer[len];
 	[[dataWrite dataUsingEncoding:NSUTF8StringEncoding] getBytes:buffer];
@@ -419,11 +483,11 @@
 
 #define hex(a) (hexchar[(a) & 15])
 - (void) writeServer:(NSString *)dataWrite {
-	NSLog(@"write:[%@]", dataWrite);
+	//NSLog(@"write:[%@]", dataWrite);
 	unsigned int len = [dataWrite length];
 		
 	static char hexchar[] = "0123456789abcdef";
-	uint8_t buffer[4];
+	uint8_t buffer[5];
 	
 	len += 4;
 	buffer[0] = hex(len >> 12);
@@ -431,9 +495,9 @@
 	buffer[2] = hex(len >> 4);
 	buffer[3] = hex(len);
 	
-	NSLog(@"write len");
+	//NSLog(@"write len [%c %c %c %c]", buffer[0], buffer[1], buffer[2], buffer[3]);
 	[outStream write:buffer maxLength:4];
-	NSLog(@"write data");
+	//NSLog(@"write data");
 	[self sendPacket:dataWrite];
 }
 
@@ -445,6 +509,7 @@
 	if(!len) {
 		if ([inStream streamStatus] != NSStreamStatusAtEnd)
 			NSLog(@"protocol error: read error");
+		return nil;
 	}
 	
 	int n;

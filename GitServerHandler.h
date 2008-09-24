@@ -26,6 +26,12 @@
 
 - (void) initWithGit:(Git *)git gitPath:(NSString *)gitRepoPath input:(NSInputStream *)streamIn output:(NSOutputStream *)streamOut;
 - (void) handleRequest;
+
+- (void) uploadPack:(NSString *)repositoryName;
+- (void) receiveNeeds;
+- (void) uploadPackFile;
+- (void) sendNack;
+
 - (void) receivePack:(NSString *)repositoryName;
 
 - (void) sendRefs;
