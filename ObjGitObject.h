@@ -1,11 +1,11 @@
 //
-//  GitObject.h
+//  ObjGitObject.h
 //  ObjGit
 //
 
 #import <Foundation/Foundation.h>
 
-@interface GitObject : NSObject {
+@interface ObjGitObject : NSObject {
 	NSString* sha;
 	NSInteger size;
 	NSString* type;

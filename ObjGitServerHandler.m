@@ -1,5 +1,5 @@
 //
-//  GitServerHandler.m
+//  ObjGitServerHandler.m
 //  ObjGit
 //
 
@@ -14,12 +14,14 @@
 #define OBJ_OFS_DELTA 6
 #define OBJ_REF_DELTA 7
 
-#import "Git.h"
-#import "GitObject.h"
-#import "GitServerHandler.h"
+#import "ObjGit.h"
+#import "ObjGitObject.h"
+#import "ObjGitCommit.h"
+#import "ObjGitTree.h"
+#import "ObjGitServerHandler.h"
 #include <zlib.h>
 
-@implementation GitServerHandler
+@implementation ObjGitServerHandler
 
 @synthesize inStream;
 @synthesize outStream;
@@ -27,9 +29,12 @@
 @synthesize gitPath;
 
 @synthesize refsRead;
+@synthesize needRefs;
+@synthesize refDict;
+
 @synthesize capabilitiesSent;
 
-- (void) initWithGit:(Git *)git gitPath:(NSString *)gitRepoPath input:(NSInputStream *)streamIn output:(NSOutputStream *)streamOut
+- (void) initWithGit:(ObjGit *)git gitPath:(NSString *)gitRepoPath input:(NSInputStream *)streamIn output:(NSOutputStream *)streamOut
 {
 	gitRepo		= git;
 	gitPath 	= gitRepoPath;
@@ -78,10 +83,10 @@
 
 - (void) receiveNeeds
 {
-	NSLog(@"recieve needs");
+	NSLog(@"receive needs");
 	NSString *data, *cmd, *sha;
 	NSArray *values;
-	NSMutableArray *needRefs = [[NSMutableArray alloc] init];
+	needRefs = [[NSMutableArray alloc] init];
 
 	while(![(data = [self packetReadLine]) isEqualToString:@"done\n"]) {
 		if([data length] > 40) {
@@ -103,8 +108,75 @@
 
 - (void) uploadPackFile
 {
+	NSString *command, *shaValue;
+	NSArray *thisRef;
+
+	refDict = [[NSMutableDictionary alloc] init];
+	
+	NSEnumerator *e    = [needRefs objectEnumerator];
+	while ( (thisRef = [e nextObject]) ) {
+		NSLog(@"1refs: %@", thisRef);
+
+		command  = [thisRef objectAtIndex:0];
+		shaValue = [thisRef objectAtIndex:1];
+		if([command isEqualToString:@"have"]) {
+			[refDict setObject:@"have" forKey:shaValue];
+		}
+	}
+
+	e    = [needRefs objectEnumerator];
+	while ( (thisRef = [e nextObject]) ) {
+		NSLog(@"2refs: %@", thisRef);
+		
+		command  = [thisRef objectAtIndex:0];
+		shaValue = [thisRef objectAtIndex:1];
+		NSLog(@"2cmd: %@", command);
+		NSLog(@"2sha: %@", shaValue);
+		if([command isEqualToString:@"want"]) {
+			[self gatherObjectShasFromCommit:shaValue];
+		}
+	}
+	
+	NSLog(@"refs: %@", refDict);
+	
 	NSLog(@"upload packfile");
+	[self sendPacket:@"PACK"];
+	NSLog(@"pack sent");
+	[self sendPacket:@"0002"];
+	NSLog(@"version sent");
+	[self sendPacket:@"0000"];
+	NSLog(@"size sent");
+	[self sendPacket:NULL_SHA];
+	NSLog(@"end sent");
 }
+
+- (void) gatherObjectShasFromCommit:(NSString *)shaValue 
+{
+	NSString *parentSha;
+
+	ObjGitCommit *commit = [[ObjGitCommit alloc] initFromGitObject:[gitRepo getObjectFromSha:shaValue]];
+	[refDict setObject:@"_commit" forKey:shaValue];
+
+	// add the tree objects
+	[self gatherObjectShasFromTree:[commit treeSha]];
+
+	NSArray *parents = [commit parentShas];
+	[commit release];
+	
+	NSEnumerator *e = [parents objectEnumerator];
+	while ( (parentSha = [e nextObject]) ) {
+		[self gatherObjectShasFromCommit:parentSha];
+	}
+}
+
+- (void) gatherObjectShasFromTree:(NSString *)shaValue 
+{
+	NSLog(@"TREE: %@", shaValue);
+	ObjGitTree *tree = [[ObjGitTree alloc] initFromGitObject:[gitRepo getObjectFromSha:shaValue]];
+	NSLog(@"tree: %@", tree);
+	[refDict setObject:@"/" forKey:shaValue];
+}
+
 
 - (void) sendNack
 {
@@ -240,7 +312,7 @@
 		objectData = [self readData:size];
 
 		if([gitRepo hasObject:sha1]) {
-			GitObject *object;
+			ObjGitObject *object;
 			object = [gitRepo getObjectFromSha:sha1];
 			contents = [self patchDelta:objectData withObject:object];
 			[gitRepo writeObject:contents withType:[self typeString:type] withSize:size];
@@ -257,7 +329,7 @@
 	}
 }
 
-- (NSData *) patchDelta:(NSData *)deltaData withObject:(GitObject *)gitObject
+- (NSData *) patchDelta:(NSData *)deltaData withObject:(ObjGitObject *)gitObject
 {
 	int sourceSize, destSize, position;
 	int cp_off, cp_size;
@@ -363,7 +435,7 @@
 	char sha[41];
 	uint8_t rawsha[20];
 	[inStream read:rawsha maxLength:20];
-	[Git gitUnpackHex:rawsha fillSha:sha];
+	[ObjGit gitUnpackHex:rawsha fillSha:sha];
 	return [[NSString alloc] initWithBytes:sha length:40 encoding:NSASCIIStringEncoding];	
 }
 

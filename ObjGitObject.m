@@ -1,12 +1,12 @@
 //
-//  GitObject.m
+//  ObjGitObject.m
 //  ObjGit
 //
 
-#import "GitObject.h"
+#import "ObjGitObject.h"
 #import "NSDataCompression.h"
 
-@implementation GitObject
+@implementation ObjGitObject
 
 @synthesize sha;
 @synthesize size;
@@ -19,7 +19,7 @@
 	self = [super init];	
 	sha = shaValue;
 	raw = [self inflateRaw:rawData];
-	// NSLog(@"sha: %@", sha);
+	//NSLog(@"init sha: %@", sha);
 	// NSLog(@"raw: %@", raw);
 	[self parseRaw];
 	return self;
@@ -37,12 +37,9 @@
     contents = [NSString stringWithCString:ptr length:rest];
 
 	NSArray *headerData = [header componentsSeparatedByString:@" "];
+	
 	type =  [headerData objectAtIndex:0];
 	size = [[headerData objectAtIndex:1] intValue];
-	
-	//NSLog(@"type:%@", type);
-	//NSLog(@"len:%d", size);
-	//NSLog(@"con:%@", contents);
 }
 
 - (NSData *) inflateRaw:(NSData *)rawData

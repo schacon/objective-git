@@ -1,30 +1,36 @@
 //
-//  GitServerHandler.h
+//  ObjGitServerHandler.h
 //  ObjGit
 //
 
 #import <Foundation/Foundation.h>
-#import "GitObject.h"
+#import "ObjGitObject.h"
 
-@interface GitServerHandler : NSObject {
+@interface ObjGitServerHandler : NSObject {
 	NSInputStream*		inStream;
 	NSOutputStream*		outStream;
-	Git*				gitRepo;
+	ObjGit*				gitRepo;
 	NSString*			gitPath;
 
-	NSMutableArray*		refsRead;
+	NSMutableArray*			refsRead;
+	NSMutableArray*			needRefs;
+	NSMutableDictionary*	refDict;
+	
 	int					capabilitiesSent;
 }
 
 @property(assign, readwrite) NSInputStream *inStream;	
 @property(assign, readwrite) NSOutputStream *outStream;	
-@property(assign, readwrite) Git *gitRepo;
+@property(assign, readwrite) ObjGit *gitRepo;
 @property(assign, readwrite) NSString *gitPath;
 
 @property(assign, readwrite) NSMutableArray *refsRead;
+@property(assign, readwrite) NSMutableArray *needRefs;
+@property(assign, readwrite) NSMutableDictionary *refDict;
+
 @property(assign, readwrite) int capabilitiesSent;
 
-- (void) initWithGit:(Git *)git gitPath:(NSString *)gitRepoPath input:(NSInputStream *)streamIn output:(NSOutputStream *)streamOut;
+- (void) initWithGit:(ObjGit *)git gitPath:(NSString *)gitRepoPath input:(NSInputStream *)streamIn output:(NSOutputStream *)streamOut;
 - (void) handleRequest;
 
 - (void) uploadPack:(NSString *)repositoryName;
@@ -33,6 +39,8 @@
 - (void) sendNack;
 
 - (void) receivePack:(NSString *)repositoryName;
+- (void) gatherObjectShasFromCommit:(NSString *)shaValue;
+- (void) gatherObjectShasFromTree:(NSString *)shaValue;
 
 - (void) sendRefs;
 - (void) sendRef:(NSString *)refName sha:(NSString *)shaString;
@@ -43,7 +51,7 @@
 - (NSString *) typeString:(int)type;
 - (void) unpackDeltified:(int)type size:(int)size;
 
-- (NSData *) patchDelta:(NSData *)deltaData withObject:(GitObject *)gitObject;
+- (NSData *) patchDelta:(NSData *)deltaData withObject:(ObjGitObject *)gitObject;
 - (NSArray *) patchDeltaHeaderSize:(NSData *)deltaData position:(int)position;
 
 - (NSString *)readServerSha;
