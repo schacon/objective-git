@@ -7,11 +7,11 @@
 #import "ObjGitObject.h"
 
 @interface ObjGitTree : NSObject {
-	NSArray		  *entryShas;
+	NSArray		  *treeEntries;
 	ObjGitObject  *gitObject;
 }
 
-@property(assign, readwrite) NSArray   *entryShas;
+@property(assign, readwrite) NSArray   *treeEntries;
 @property(assign, readwrite) ObjGitObject *gitObject;
 
 - (id) initFromGitObject:(ObjGitObject *)object;

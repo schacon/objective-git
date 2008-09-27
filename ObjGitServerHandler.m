@@ -6,6 +6,9 @@
 #define NULL_SHA @"0000000000000000000000000000000000000000"
 #define CAPABILITIES @" report-status delete-refs "
 
+#define PACK_SIGNATURE 0x5041434b	/* "PACK" */
+#define PACK_VERSION 2
+
 #define OBJ_NONE	0
 #define OBJ_COMMIT	1
 #define OBJ_TREE	2
@@ -19,7 +22,9 @@
 #import "ObjGitCommit.h"
 #import "ObjGitTree.h"
 #import "ObjGitServerHandler.h"
+#import "NSDataCompression.h"
 #include <zlib.h>
+#include <CommonCrypto/CommonDigest.h>
 
 @implementation ObjGitServerHandler
 
@@ -115,8 +120,6 @@
 	
 	NSEnumerator *e    = [needRefs objectEnumerator];
 	while ( (thisRef = [e nextObject]) ) {
-		NSLog(@"1refs: %@", thisRef);
-
 		command  = [thisRef objectAtIndex:0];
 		shaValue = [thisRef objectAtIndex:1];
 		if([command isEqualToString:@"have"]) {
@@ -126,28 +129,99 @@
 
 	e    = [needRefs objectEnumerator];
 	while ( (thisRef = [e nextObject]) ) {
-		NSLog(@"2refs: %@", thisRef);
-		
 		command  = [thisRef objectAtIndex:0];
 		shaValue = [thisRef objectAtIndex:1];
-		NSLog(@"2cmd: %@", command);
-		NSLog(@"2sha: %@", shaValue);
 		if([command isEqualToString:@"want"]) {
 			[self gatherObjectShasFromCommit:shaValue];
 		}
 	}
 	
-	NSLog(@"refs: %@", refDict);
+	[self sendPackData];
+}
+
+- (void) sendPackData
+{
+	NSString *current;
+	NSEnumerator *e;
 	
-	NSLog(@"upload packfile");
-	[self sendPacket:@"PACK"];
-	NSLog(@"pack sent");
-	[self sendPacket:@"0002"];
-	NSLog(@"version sent");
-	[self sendPacket:@"0000"];
-	NSLog(@"size sent");
-	[self sendPacket:NULL_SHA];
-	NSLog(@"end sent");
+	CC_SHA1_CTX *checksum;
+	CC_SHA1_Init(checksum);
+	
+	//NSArray *shas;
+	//shas = [refDict keysSortedByValueUsingSelector:@selector(compare:)];
+	
+	uint8_t buffer[5];	
+	
+	// write pack header
+	
+	[self longVal:htonl(PACK_SIGNATURE) toByteBuffer:buffer];
+	[self respondPack:buffer length:4 checkSum:checksum];
+
+	[self longVal:htonl(PACK_VERSION) toByteBuffer:buffer];
+	[self respondPack:buffer length:4 checkSum:checksum];
+
+	[self longVal:htonl([refDict count]) toByteBuffer:buffer];
+	NSLog(@"write len [%d %d %d %d]", buffer[0], buffer[1], buffer[2], buffer[3]);
+	[self respondPack:buffer length:4 checkSum:checksum];
+	
+	//NSLog(@"refs: %@", shas);
+	e    = [refDict keyEnumerator];
+	ObjGitObject *obj;
+	NSData *objData, *data;
+	int size, btype, c;
+	while ( (current = [e nextObject]) ) {
+		obj = [gitRepo getObjectFromSha:current];
+		size = [obj size];
+		btype = [self typeInt:[obj type]];
+		
+		c = (btype << 4) | (size & 15);
+		size = (size >> 4);
+		if(size > 0) 
+			c |= 0x80;
+		buffer[0] = c;
+		[self respondPack:buffer length:1 checkSum:checksum];
+		
+		while (size > 0) {
+			c = size & 0x7f;
+			size = (size >> 7);
+			if(size > 0) {
+				c |= 0x80;
+			}
+			buffer[0] = c;
+			[self respondPack:buffer length:1 checkSum:checksum];
+		}
+		 
+		// pack object data
+		//NSLog(@"srclen:%d, %d", [obj size], [obj rawContentLen]);
+		objData = [NSData dataWithBytes:[obj rawContents] length:([obj rawContentLen])];
+		data = [objData compressedData];
+
+		int len = [data length];
+		uint8_t dataBuffer[len + 1];
+		[data getBytes:dataBuffer];
+		
+		[self respondPack:dataBuffer length:len checkSum:checksum];
+	}
+
+	unsigned char finalSha[20];
+	CC_SHA1_Final(finalSha, checksum);
+	
+	[outStream write:finalSha maxLength:20];
+	NSLog(@"end sent");	 
+}
+
+- (void) respondPack:(uint8_t *)buffer length:(int)size checkSum:(CC_SHA1_CTX *)checksum 
+{
+	CC_SHA1_Update(checksum, buffer, size);
+	[outStream write:buffer maxLength:size];
+}
+
+- (void) longVal:(uint32_t)raw toByteBuffer:(uint8_t *)buffer
+{
+	buffer[3] = (raw >> 24);
+	buffer[2] = (raw >> 16);
+	buffer[1] = (raw >> 8);
+	buffer[0] = (raw);
 }
 
 - (void) gatherObjectShasFromCommit:(NSString *)shaValue 
@@ -165,16 +239,28 @@
 	
 	NSEnumerator *e = [parents objectEnumerator];
 	while ( (parentSha = [e nextObject]) ) {
+		// TODO : check that refDict does not have this
 		[self gatherObjectShasFromCommit:parentSha];
 	}
 }
 
 - (void) gatherObjectShasFromTree:(NSString *)shaValue 
 {
-	NSLog(@"TREE: %@", shaValue);
 	ObjGitTree *tree = [[ObjGitTree alloc] initFromGitObject:[gitRepo getObjectFromSha:shaValue]];
-	NSLog(@"tree: %@", tree);
 	[refDict setObject:@"/" forKey:shaValue];
+	NSEnumerator *e = [[tree treeEntries] objectEnumerator];
+	NSArray *entries;
+	NSString *name, *sha, *mode;
+	while ( (entries = [e nextObject]) ) {
+		mode = [entries objectAtIndex:0];
+		name = [entries objectAtIndex:1];
+		sha  = [entries objectAtIndex:2];
+		[refDict setObject:name forKey:sha];
+		if ([mode isEqualToString:@"40000"]) { // tree
+			// TODO : check that refDict does not have this
+			[self gatherObjectShasFromTree:sha];
+		}
+	}
 }
 
 
@@ -451,6 +537,18 @@
 	return @"";
 }
 
+- (int) typeInt:(NSString *)type {
+	if([type isEqualToString:@"commit"])
+		return OBJ_COMMIT;
+	if([type isEqualToString:@"tree"])
+		return OBJ_TREE;
+	if([type isEqualToString:@"blob"])
+		return OBJ_BLOB;
+	if([type isEqualToString:@"tag"])
+		return OBJ_TAG;
+	return 0;
+}
+
 - (NSData *) readData:(int)size {
 	// read in the data		
 	NSMutableData *decompressed = [NSMutableData dataWithLength: size];
@@ -544,7 +642,7 @@
 }
 
 - (void) sendPacket:(NSString *)dataWrite {
-	//NSLog(@"send:[%@]", dataWrite);
+	NSLog(@"send:[%@]", dataWrite);
 	int len = [dataWrite length];
 	uint8_t buffer[len];
 	[[dataWrite dataUsingEncoding:NSUTF8StringEncoding] getBytes:buffer];
@@ -557,20 +655,24 @@
 - (void) writeServer:(NSString *)dataWrite {
 	//NSLog(@"write:[%@]", dataWrite);
 	unsigned int len = [dataWrite length];
-		
+	len += 4;
+	[self writeServerLength:len];
+	//NSLog(@"write data");
+	[self sendPacket:dataWrite];
+}
+
+- (void) writeServerLength:(unsigned int)length 
+{
 	static char hexchar[] = "0123456789abcdef";
 	uint8_t buffer[5];
 	
-	len += 4;
-	buffer[0] = hex(len >> 12);
-	buffer[1] = hex(len >> 8);
-	buffer[2] = hex(len >> 4);
-	buffer[3] = hex(len);
+	buffer[0] = hex(length >> 12);
+	buffer[1] = hex(length >> 8);
+	buffer[2] = hex(length >> 4);
+	buffer[3] = hex(length);
 	
 	//NSLog(@"write len [%c %c %c %c]", buffer[0], buffer[1], buffer[2], buffer[3]);
-	[outStream write:buffer maxLength:4];
-	//NSLog(@"write data");
-	[self sendPacket:dataWrite];
+	[outStream write:buffer maxLength:4];	
 }
 
 - (NSString *) packetReadLine {

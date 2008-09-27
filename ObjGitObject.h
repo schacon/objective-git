@@ -10,6 +10,8 @@
 	NSInteger size;
 	NSString* type;
 	NSString* contents;
+	char* rawContents;
+	int rawContentLen;
 	NSData*   raw;
 }
 
@@ -17,6 +19,8 @@
 @property(assign, readwrite) NSInteger size;	
 @property(assign, readwrite) NSString *type;	
 @property(assign, readwrite) NSString *contents;	
+@property(assign, readwrite) char *rawContents;	
+@property(assign, readwrite) int rawContentLen;
 @property(assign, readwrite) NSData   *raw;	
 
 - (id) initFromRaw:(NSData *)rawData withSha:(NSString *)shaValue;

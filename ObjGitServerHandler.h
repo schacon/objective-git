@@ -4,6 +4,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#include <CommonCrypto/CommonDigest.h>
 #import "ObjGitObject.h"
 
 @interface ObjGitServerHandler : NSObject {
@@ -37,10 +38,12 @@
 - (void) receiveNeeds;
 - (void) uploadPackFile;
 - (void) sendNack;
+- (void) sendPackData;
 
 - (void) receivePack:(NSString *)repositoryName;
 - (void) gatherObjectShasFromCommit:(NSString *)shaValue;
 - (void) gatherObjectShasFromTree:(NSString *)shaValue;
+- (void) respondPack:(uint8_t *)buffer length:(int)size checkSum:(CC_SHA1_CTX *)checksum;
 
 - (void) sendRefs;
 - (void) sendRef:(NSString *)refName sha:(NSString *)shaString;
@@ -49,6 +52,7 @@
 - (void) writeRefs;
 - (NSData *) readData:(int)size;
 - (NSString *) typeString:(int)type;
+- (int) typeInt:(NSString *)type;
 - (void) unpackDeltified:(int)type size:(int)size;
 
 - (NSData *) patchDelta:(NSData *)deltaData withObject:(ObjGitObject *)gitObject;
@@ -58,8 +62,10 @@
 - (int) readPackHeader;
 - (void) unpackObject;
 
+- (void) longVal:(uint32_t)raw toByteBuffer:(uint8_t *)buffer;
 - (void) packetFlush;
 - (void) writeServer:(NSString *)dataWrite;
+- (void) writeServerLength:(unsigned int)length;
 - (void) sendPacket:(NSString *)dataSend;
 - (NSString *) packetReadLine;
 
