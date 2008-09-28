@@ -53,6 +53,8 @@
 			if ([fileManager fileExistsAtPath:tempRef isDirectory:&isDir] && !isDir) {
 				thisSha = [NSString stringWithContentsOfFile:tempRef encoding:NSASCIIStringEncoding error:nil];
 				[refsFinal addObject:[NSArray arrayWithObjects:thisRef,thisSha,nil]];
+				if([thisRef isEqualToString:@"refs/heads/master"])
+					[refsFinal addObject:[NSArray arrayWithObjects:@"HEAD",thisSha,nil]];
 			}
 		}
 	}
@@ -152,7 +154,7 @@
 - (ObjGitObject *) getObjectFromSha:(NSString *)sha1 
 {
 	NSString *objectPath = [self getLooseObjectPathBySha:sha1];
-	//NSLog(@"READ FROM FILE: %@", objectPath);
+	// NSLog(@"READ FROM FILE: %@", objectPath);
 	NSFileHandle *fm = [NSFileHandle fileHandleForReadingAtPath:objectPath];
 	return [[ObjGitObject alloc] initFromRaw:[fm availableData] withSha:sha1];	
 }
