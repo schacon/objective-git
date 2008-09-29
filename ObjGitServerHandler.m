@@ -113,6 +113,7 @@
 
 - (void) uploadPackFile
 {
+	NSLog(@"upload pack file");
 	NSString *command, *shaValue;
 	NSArray *thisRef;
 
@@ -127,6 +128,7 @@
 		}
 	}
 
+	NSLog(@"gathering shas");
 	e    = [needRefs objectEnumerator];
 	while ( (thisRef = [e nextObject]) ) {
 		command  = [thisRef objectAtIndex:0];
@@ -141,6 +143,7 @@
 
 - (void) sendPackData
 {
+	NSLog(@"send pack data");
 	NSString *current;
 	NSEnumerator *e;
 	
@@ -226,7 +229,6 @@
 - (void) gatherObjectShasFromCommit:(NSString *)shaValue 
 {
 	NSString *parentSha;
-
 	ObjGitCommit *commit = [[ObjGitCommit alloc] initFromGitObject:[gitRepo getObjectFromSha:shaValue]];
 	[refDict setObject:@"_commit" forKey:shaValue];
 
@@ -234,10 +236,10 @@
 	[self gatherObjectShasFromTree:[commit treeSha]];
 
 	NSArray *parents = [commit parentShas];
-	[commit release];
 	
 	NSEnumerator *e = [parents objectEnumerator];
 	while ( (parentSha = [e nextObject]) ) {
+		NSLog(@"parent sha:%@", parentSha);
 		// TODO : check that refDict does not have this
 		[self gatherObjectShasFromCommit:parentSha];
 	}
@@ -415,7 +417,8 @@
 			ObjGitObject *object;
 			object = [gitRepo getObjectFromSha:sha1];
 			contents = [self patchDelta:objectData withObject:object];
-			[gitRepo writeObject:contents withType:[self typeString:type] withSize:size];
+			//NSLog(@"unpacked delta: %@ : %@", contents, [object type]);
+			[gitRepo writeObject:contents withType:[object type] withSize:[contents length]];
 		} else {
 			// TODO : OBJECT ISN'T HERE YET, SAVE THIS DELTA FOR LATER //
 			/*
@@ -431,28 +434,31 @@
 
 - (NSData *) patchDelta:(NSData *)deltaData withObject:(ObjGitObject *)gitObject
 {
-	int sourceSize, destSize, position;
-	int cp_off, cp_size;
+	unsigned long sourceSize, destSize, position;
+	unsigned long cp_off, cp_size;
 	unsigned char c[2], d[2];
 	
 	int buffLength = 1000;
 	NSMutableData *buffer = [[NSMutableData alloc] initWithCapacity:buffLength];
 	
 	NSArray *sizePos = [self patchDeltaHeaderSize:deltaData position:0];
-	sourceSize	= [[sizePos objectAtIndex:0] intValue];
-	position	= [[sizePos objectAtIndex:1] intValue];
+	sourceSize	= [[sizePos objectAtIndex:0] longValue];
+	position	= [[sizePos objectAtIndex:1] longValue];
 	
+	//NSLog(@"SS: %d  Pos:%d", sourceSize, position);
+
 	sizePos = [self patchDeltaHeaderSize:deltaData position:position];
-	destSize	= [[sizePos objectAtIndex:0] intValue];
-	position	= [[sizePos objectAtIndex:1] intValue];
+	destSize	= [[sizePos objectAtIndex:0] longValue];
+	position	= [[sizePos objectAtIndex:1] longValue];
 
-	//NSLog(@"DS: %d  Pos:%d", destSize, position);
-
-	NSData *source = [NSData dataWithBytes:[[gitObject contents] UTF8String] length:[gitObject size]];
+	NSData *source = [NSData dataWithBytes:[gitObject rawContents] length:[gitObject rawContentLen]];
+	
+	//NSLog(@"SOURCE:%@", source);
 	NSMutableData *destination = [NSMutableData dataWithCapacity:destSize];
 
-	while (position < ([deltaData length] - 1)) {
+	while (position < ([deltaData length])) {
 		[deltaData getBytes:c range:NSMakeRange(position, 1)];
+		//NSLog(@"DS: %d  Pos:%d", destSize, position);
 		//NSLog(@"CHR: %d", c[0]);
 		
 		position += 1;
@@ -502,6 +508,7 @@
 
 			[source getBytes:[buffer mutableBytes] range:NSMakeRange(cp_off, cp_size)];
 			[destination appendBytes:[buffer bytes]	length:cp_size];
+			//NSLog(@"dest: %@", destination);
 		} else if(c[0] != 0) {
 			//NSLog(@"thingy: %d, %d", position, c[0]);
 			[source getBytes:[buffer mutableBytes] range:NSMakeRange(position, c[0])];
@@ -511,23 +518,24 @@
 			 NSLog(@"invalid delta data");
 		}
 	}
-	return [NSData dataWithBytes:destination length:[destination length]];
+	return destination;
 }
 
-- (NSArray *) patchDeltaHeaderSize:(NSData *)deltaData position:(int)position
+- (NSArray *) patchDeltaHeaderSize:(NSData *)deltaData position:(unsigned long)position
 {
-	int size = 0;
+	unsigned long size = 0;
 	int shift = 0;
 	unsigned char c[2];
 		
 	do {
 		[deltaData getBytes:c range:NSMakeRange(position, 1)];
+		//NSLog(@"read bytes:%d %d", c[0], position);
 		position += 1;
 		size |= (c[0] & 0x7f) << shift;
 		shift += 7;
 	} while ( (c[0] & 0x80) != 0 );
 
-	return [NSArray arrayWithObjects:[NSNumber numberWithInt:size], [NSNumber numberWithInt:position], nil];
+	return [NSArray arrayWithObjects:[NSNumber numberWithLong:size], [NSNumber numberWithLong:position], nil];
 }
 
 - (NSString *) readServerSha 
