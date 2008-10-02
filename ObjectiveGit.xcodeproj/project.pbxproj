@@ -10,22 +10,35 @@
 		573C950C0E957B07004965B6 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0867D69BFE84028FC02AAC07 /* Foundation.framework */; };
 		573C951C0E957B16004965B6 /* git-pack.c in Sources */ = {isa = PBXBuildFile; fileRef = 573C950E0E957B16004965B6 /* git-pack.c */; };
 		573C951D0E957B16004965B6 /* git-pack.h in Headers */ = {isa = PBXBuildFile; fileRef = 573C950F0E957B16004965B6 /* git-pack.h */; };
-		573C951E0E957B16004965B6 /* GITCommit.h in Headers */ = {isa = PBXBuildFile; fileRef = 573C95100E957B16004965B6 /* GITCommit.h */; };
+		573C951E0E957B16004965B6 /* GITCommit.h in Headers */ = {isa = PBXBuildFile; fileRef = 573C95100E957B16004965B6 /* GITCommit.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		573C951F0E957B16004965B6 /* GITCommit.m in Sources */ = {isa = PBXBuildFile; fileRef = 573C95110E957B16004965B6 /* GITCommit.m */; };
-		573C95200E957B16004965B6 /* GITObject.h in Headers */ = {isa = PBXBuildFile; fileRef = 573C95120E957B16004965B6 /* GITObject.h */; };
+		573C95200E957B16004965B6 /* GITObject.h in Headers */ = {isa = PBXBuildFile; fileRef = 573C95120E957B16004965B6 /* GITObject.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		573C95210E957B16004965B6 /* GITObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 573C95130E957B16004965B6 /* GITObject.m */; };
-		573C95220E957B16004965B6 /* GITRepo.h in Headers */ = {isa = PBXBuildFile; fileRef = 573C95140E957B16004965B6 /* GITRepo.h */; };
+		573C95220E957B16004965B6 /* GITRepo.h in Headers */ = {isa = PBXBuildFile; fileRef = 573C95140E957B16004965B6 /* GITRepo.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		573C95230E957B16004965B6 /* GITRepo.m in Sources */ = {isa = PBXBuildFile; fileRef = 573C95150E957B16004965B6 /* GITRepo.m */; };
-		573C95240E957B16004965B6 /* GITServerHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 573C95160E957B16004965B6 /* GITServerHandler.h */; };
+		573C95240E957B16004965B6 /* GITServerHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 573C95160E957B16004965B6 /* GITServerHandler.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		573C95250E957B16004965B6 /* GITServerHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 573C95170E957B16004965B6 /* GITServerHandler.m */; };
-		573C95260E957B16004965B6 /* GITTree.h in Headers */ = {isa = PBXBuildFile; fileRef = 573C95180E957B16004965B6 /* GITTree.h */; };
+		573C95260E957B16004965B6 /* GITTree.h in Headers */ = {isa = PBXBuildFile; fileRef = 573C95180E957B16004965B6 /* GITTree.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		573C95270E957B16004965B6 /* GITTree.m in Sources */ = {isa = PBXBuildFile; fileRef = 573C95190E957B16004965B6 /* GITTree.m */; };
 		573C95280E957B16004965B6 /* NSDataCompression.h in Headers */ = {isa = PBXBuildFile; fileRef = 573C951A0E957B16004965B6 /* NSDataCompression.h */; };
 		573C95290E957B16004965B6 /* NSDataCompression.m in Sources */ = {isa = PBXBuildFile; fileRef = 573C951B0E957B16004965B6 /* NSDataCompression.m */; };
 		573C952D0E957B55004965B6 /* NSFileManager-DirHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = 573C952B0E957B55004965B6 /* NSFileManager-DirHelpers.h */; };
 		573C952E0E957B55004965B6 /* NSFileManager-DirHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 573C952C0E957B55004965B6 /* NSFileManager-DirHelpers.m */; };
 		573C953C0E957BE1004965B6 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 573C953B0E957BE1004965B6 /* libz.dylib */; };
+		573C95910E95870D004965B6 /* ObjectiveGit.h in Headers */ = {isa = PBXBuildFile; fileRef = 573C95900E95870D004965B6 /* ObjectiveGit.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		573C959A0E958756004965B6 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 7;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		0867D69BFE84028FC02AAC07 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
@@ -46,6 +59,7 @@
 		573C952B0E957B55004965B6 /* NSFileManager-DirHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSFileManager-DirHelpers.h"; path = "src/NSFileManager-DirHelpers.h"; sourceTree = "<group>"; };
 		573C952C0E957B55004965B6 /* NSFileManager-DirHelpers.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSFileManager-DirHelpers.m"; path = "src/NSFileManager-DirHelpers.m"; sourceTree = "<group>"; };
 		573C953B0E957BE1004965B6 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
+		573C95900E95870D004965B6 /* ObjectiveGit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ObjectiveGit.h; path = src/ObjectiveGit.h; sourceTree = "<group>"; };
 		8DC2EF5A0486A6940098B216 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8DC2EF5B0486A6940098B216 /* ObjectiveGit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ObjectiveGit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -120,6 +134,7 @@
 				573C95190E957B16004965B6 /* GITTree.m */,
 				573C951A0E957B16004965B6 /* NSDataCompression.h */,
 				573C951B0E957B16004965B6 /* NSDataCompression.m */,
+				573C95900E95870D004965B6 /* ObjectiveGit.h */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -161,6 +176,7 @@
 				573C95260E957B16004965B6 /* GITTree.h in Headers */,
 				573C95280E957B16004965B6 /* NSDataCompression.h in Headers */,
 				573C952D0E957B55004965B6 /* NSFileManager-DirHelpers.h in Headers */,
+				573C95910E95870D004965B6 /* ObjectiveGit.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -175,6 +191,7 @@
 				8DC2EF520486A6940098B216 /* Resources */,
 				8DC2EF540486A6940098B216 /* Sources */,
 				8DC2EF560486A6940098B216 /* Frameworks */,
+				573C959A0E958756004965B6 /* CopyFiles */,
 			);
 			buildRules = (
 			);
