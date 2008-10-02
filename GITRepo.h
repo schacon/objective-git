@@ -7,11 +7,8 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "ObjGitObject.h"
-#import "ObjGitCommit.h"
-
-int gitUnpackHex (const unsigned char *rawsha, char *sha1);
-int gitPackHex (const char *sha1, unsigned char *rawsha);
+#import "GITObject.h"
+#import "GITCommit.h"
 
 @interface GITRepo : NSObject {
 	NSString *path;
@@ -40,13 +37,14 @@ int gitPackHex (const char *sha1, unsigned char *rawsha);
 - (NSUInteger) countOfRefs;
 - (id) objectInRefsAtIndex:(NSUInteger) i;
 
+- (BOOL) updateRef:(NSString *)refName toSha:(NSString *)toSha;
 - (BOOL) updateRef:(NSString *)refName toSha:(NSString *)toSha error:(NSError **)error;
 
-- (ObjGitCommit *) commitFromSha:(NSString *)sha1;
-- (ObjGitObject *) objectFromSha:(NSString *)sha1;
+- (GITCommit *) commitFromSha:(NSString *)sha1;
+- (GITObject *) objectFromSha:(NSString *)sha1;
 - (NSMutableArray *) commitsFromSha:(NSString *)shaValue limit:(NSUInteger)commitSize;
 - (BOOL) hasObject: (NSString *)sha1;
 - (NSString *) looseObjectPathBySha: (NSString *)shaValue;
-- (NSString *) writeObject:(NSData *)objectData withType:(NSString *)type size:(NSUInteger)size;
+- (BOOL) writeObject:(NSData *)objectData withType:(NSString *)type size:(NSUInteger)size;
 
 @end

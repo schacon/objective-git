@@ -30,6 +30,15 @@
 	return self;
 }
 
+- (void) dealloc;
+{
+	[sha release];
+	[type release];
+	[raw release];
+	[contentsData release];
+	[super dealloc];
+}
+
 - (void) parseRaw
 {
 	char *bytes = (char *)[[self raw] bytes]; 

@@ -7,7 +7,7 @@
 //
 
 #import "GITTree.h"
-
+#include "git-pack.h"
 
 @implementation GITTree
 
@@ -21,6 +21,13 @@
 	[self setGitObject:object];
 	[self parseContent];
 	return self;
+}
+
+- (void) dealloc;
+{
+	[gitObject release];
+	[treeEntries release];
+	[super dealloc];
 }
 
 - (void) logObject
@@ -56,7 +63,7 @@
 			for(j = 0; j < 20; j++)
 				rawsha[j] = contents[i + j + 1];
 			i += 20;
-			[ObjGit gitUnpackHex:rawsha fillSha:sha];
+			gitUnpackHex(rawsha, sha);
 			
 			mode[modePtr] = 0;
 			name[namePtr] = 0;

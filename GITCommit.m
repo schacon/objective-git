@@ -17,7 +17,7 @@
 @synthesize message;
 @synthesize gitObject;
 
-- (id) initFromGitObject:(ObjGitObject *)gObject {
+- (id) initFromGitObject:(GITObject *)gObject {
 	if (! [super init])
 		return nil;
 
@@ -28,7 +28,7 @@
 
 - (id) initFromRaw:(NSData *)rawData withSha:(NSString *)shaValue
 {
-	ObjGitObject *gObj = [[[ObjGitObject alloc] initFromRaw:rawData withSha:shaValue] autorelease];
+	GITObject *gObj = [[[GITObject alloc] initFromRaw:rawData withSha:shaValue] autorelease];
 	return [self initFromGitObject:gObj];
 }
 

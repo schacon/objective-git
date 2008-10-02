@@ -9,12 +9,12 @@
 #import <Foundation/Foundation.h>
 
 @interface GITObject : NSObject {
-	NSString* sha;
+	NSString *sha;
 	NSUInteger size;
-	NSString* type;
+	NSString *type;
 	NSUInteger rawContentLen;
-	NSData*   raw;
-	NSData* contentsData;
+	NSData *raw;
+	NSData *contentsData;
 }
 
 @property(copy, readwrite) NSString *sha;	

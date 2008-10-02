@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "ObjGitObject.h"
+#import "GITObject.h"
 
 @interface GITCommit : NSObject {
 	NSArray	   *parentShas;
@@ -15,13 +15,13 @@
 	NSMutableDictionary *author;
 	NSMutableDictionary *committer;
 	NSString   *message;
-	ObjGitObject  *gitObject;
+	GITObject  *gitObject;
 }
 
 @property(copy, readwrite) NSArray   *parentShas;
 @property(copy, readwrite) NSString    *treeSha;
 @property(copy, readwrite) NSString  *message;	
-@property(retain, readwrite) ObjGitObject *gitObject;
+@property(retain, readwrite) GITObject *gitObject;
 
 @property(copy, readonly) NSMutableDictionary *author;
 - (void) setAuthor:(NSDictionary *) newAuthor;
@@ -29,7 +29,7 @@
 @property(copy, readonly) NSMutableDictionary *committer;
 - (void) setCommitter:(NSDictionary *) newAuthor;
 
-- (id) initFromGitObject:(ObjGitObject *)gObject;
+- (id) initFromGitObject:(GITObject *)gObject;
 - (id) initFromRaw:(NSData *)rawData withSha:(NSString *)shaValue;
 - (void) parseContent;
 - (void) logObject;

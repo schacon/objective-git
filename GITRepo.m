@@ -10,54 +10,7 @@
 #import "NSFileManager-DirHelpers.h"
 #import "NSDataCompression.h"
 #include <CommonCrypto/CommonDigest.h>
-
-#define IS_APLHA(n)	(n <= 102 && n >= 97) ? 1 : 0
-
-int gitUnpackHex (const unsigned char *rawsha, char *sha1)
-{
-	static const char hex[] = "0123456789abcdef";
-	int i;
-	
-	for (i = 0; i < 20; i++) {          
-		unsigned char n = rawsha[i];
-		sha1[i * 2] = hex[((n >> 4) & 15)];
-		n <<= 4;
-		sha1[(i * 2) + 1] = hex[((n >> 4) & 15)];
-	}
-	sha1[40] = '\0';
-	
-	return 1;   
-}
-
-
-/*
- * fills 20-char sha from 40-char hex version
- */
-
-int gitPackHex (const char *sha1, unsigned char *rawsha)
-{
-	unsigned char byte = 0;
-	int i, j = 0;
-	
-	for (i = 1; i <= 40; i++) {
-		unsigned char n = sha1[i - 1];
-		
-		if(IS_APLHA(n)) {
-			byte |= ((n & 15) + 9) & 15;
-		} else {
-			byte |= (n & 15);
-		}
-		if(i & 1) {
-			byte <<= 4;
-		} else {
-			rawsha[j] = (byte & 0xff);
-			j++;
-			byte = 0;
-		}
-	}
-	return 1;
-}
-
+#include "git-pack.h"
 
 @implementation GITRepo
 
@@ -228,25 +181,30 @@ int gitPackHex (const char *sha1, unsigned char *rawsha)
 	return refsCopy;
 }
 
+- (BOOL) updateRef:(NSString *)refName toSha:(NSString *)toSha;
+{
+	return [self updateRef:refName toSha:toSha error:nil];
+}
+
 - (BOOL) updateRef:(NSString *)refName toSha:(NSString *)toSha error:(NSError **)error;
 {
 	NSString *refPath = [[self path] stringByAppendingPathComponent:refName];
 	return [toSha writeToFile:refPath atomically:YES encoding:NSUTF8StringEncoding error:error];
 }
 
-- (ObjGitCommit *) commitFromSha:(NSString *)sha1;
+- (GITCommit *) commitFromSha:(NSString *)sha1;
 {
-	ObjGitObject *obj = [self objectFromSha:sha1];
-	ObjGitCommit *commit = [[ObjGitCommit alloc] initFromGitObject:obj];
+	GITObject *obj = [self objectFromSha:sha1];
+	GITCommit *commit = [[GITCommit alloc] initFromGitObject:obj];
 	return [commit autorelease];
 }
 
-- (ObjGitObject *) objectFromSha:(NSString *)sha1;
+- (GITObject *) objectFromSha:(NSString *)sha1;
 {
 	NSString *objectPath = [self looseObjectPathBySha:sha1];
 	//NSLog(@"READ FROM FILE: %@", objectPath);
 	NSFileHandle *fh = [NSFileHandle fileHandleForReadingAtPath:objectPath];
-	ObjGitObject *obj = [[ObjGitObject alloc] initFromRaw:[fh availableData] withSha:sha1];
+	GITObject *obj = [[GITObject alloc] initFromRaw:[fh availableData] withSha:sha1];
 	return [obj autorelease];	
 }
 
@@ -257,7 +215,7 @@ int gitPackHex (const char *sha1, unsigned char *rawsha)
 	
 	NSMutableArray *toDoArray = [NSMutableArray arrayWithCapacity:10];
 	NSMutableArray *commitArray = [NSMutableArray arrayWithCapacity:commitSize];
-	ObjGitCommit *gCommit;
+	GITCommit *gCommit;
 	
 	[toDoArray addObject: currentSha];
 	
@@ -304,8 +262,8 @@ int gitPackHex (const char *sha1, unsigned char *rawsha)
 	return [NSString stringWithFormat: @"%@/objects/%@/%@", [self path], looseSubDir, looseFileName];
 }
 
-// Maybe this go into GitObject...?
-- (NSString *) writeObject:(NSData *)objectData withType:(NSString *)type size:(NSUInteger)size;
+// Maybe this should go into GitObject...?
+- (BOOL) writeObject:(NSData *)objectData withType:(NSString *)type size:(NSUInteger)size;
 {
 	NSMutableData *object;
 	NSString *header, *objectPath, *shaStr;
@@ -328,7 +286,7 @@ int gitPackHex (const char *sha1, unsigned char *rawsha)
 	[object release];
 	
 	// return a string? Should probably return a BOOL to indicate that file has been written...
-	return shaStr;
+	return success;
 }
 
 /*
