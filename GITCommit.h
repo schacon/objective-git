@@ -24,10 +24,10 @@
 @property(retain, readwrite) ObjGitObject *gitObject;
 
 @property(copy, readonly) NSMutableDictionary *author;
-- (void) setAuthor:(NSDictionary *);
+- (void) setAuthor:(NSDictionary *) newAuthor;
 
 @property(copy, readonly) NSMutableDictionary *committer;
-- (void) setCommitter:(NSDictionary *);
+- (void) setCommitter:(NSDictionary *) newAuthor;
 
 - (id) initFromGitObject:(ObjGitObject *)gObject;
 - (id) initFromRaw:(NSData *)rawData withSha:(NSString *)shaValue;

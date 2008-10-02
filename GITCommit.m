@@ -11,16 +11,11 @@
 @implementation GITCommit
 
 @synthesize	parentShas;
+@synthesize author;
+@synthesize committer;
 @synthesize treeSha;
-//@synthesize author;
-//@synthesize authorEmail;
-//@synthesize	authoredDate;
-//@synthesize committer;
-//@synthesize committerEmail;
-//@synthesize committedDate;
 @synthesize message;
 @synthesize gitObject;
-//@synthesize sha;
 
 - (id) initFromGitObject:(ObjGitObject *)gObject {
 	if (! [super init])
@@ -39,15 +34,22 @@
 
 - (void) dealloc;
 {
-	
+	[parentShas release];
+	[author release];
+	[committer release];
+	[treeSha release];
+	[message release];
+	[gitObject release];
 	[super dealloc];
 }
 
 - (void) logObject
 {
 	NSLog(@"tree     : %@", treeSha);
-	NSLog(@"author   : %@, %@ : %@", author, author_email, authored_date);
-	NSLog(@"committer: %@, %@ : %@", committer, committer_email, committed_date);
+	NSLog(@"author   : %@, %@ : %@", 
+		  [author valueForKey:@"name"], [author valueForKey:@"email"], [author valueForKey:@"date"]);
+	NSLog(@"committer: %@, %@ : %@",
+		  [committer valueForKey:@"name"], [committer valueForKey:@"email"], [committer valueForKey:@"date"]);
 	NSLog(@"parents  : %@", parentShas);
 	NSLog(@"message  : %@", message);
 }
@@ -76,8 +78,8 @@
 
 - (NSArray *) authorArray 
 {
-	return [author objectsForKeys:[NSArray arrayWithObjects:@"name", @"email", @"date", nil
-											 notFoundMarker:[NSNull null]]];
+	return [author objectsForKeys:[NSArray arrayWithObjects:@"name", @"email", @"date", nil]
+											 notFoundMarker:[NSNull null]];
 }
 
 - (void) parseContent
@@ -87,13 +89,11 @@
 	// extract parent shas, tree sha, author/committer info, message
 	NSString *contents = [[self gitObject] contents];
 	NSArray	*lines = [contents componentsSeparatedByString:@"\n"];
-	//NSEnumerator	*enumerator;
 	NSMutableArray *parents = [NSMutableArray new];
 	NSMutableArray *buildMessage = [NSMutableArray new];
 	NSString		*line, *key, *val;
 	int inMessage = 0;
 	
-	NSString *line;
 	for (line in lines) {
 		if(!inMessage) {
 			if([line length] == 0) {
@@ -127,7 +127,7 @@
 	[pool release];
 }
 
-- (NSArray *) parseAuthorString:(NSString *)authorString withType:(NSString *)typeString
+- (NSDictionary *) parseAuthorString:(NSString *)authorString withType:(NSString *)typeString
 {
 	NSMutableDictionary *authorDict;
 	
