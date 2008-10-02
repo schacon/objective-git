@@ -210,7 +210,7 @@
 	NSString *objectPath = [self looseObjectPathBySha:sha1];
 	//NSLog(@"READ FROM FILE: %@", objectPath);
 	NSFileHandle *fh = [NSFileHandle fileHandleForReadingAtPath:objectPath];
-	GITObject *obj = [[GITObject alloc] initWithRaw:[fh availableData] withSha:sha1];
+	GITObject *obj = [[GITObject alloc] initWithRaw:[fh availableData] sha:sha1];
 	return [obj autorelease];	
 }
 

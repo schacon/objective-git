@@ -1,0 +1,4 @@
+*.framework/
+build/
+*.mode1v3
+*.pbxuser

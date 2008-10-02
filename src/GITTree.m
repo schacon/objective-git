@@ -19,7 +19,7 @@
 	return [[[self alloc] initWithGitObject:object] autorelease];
 }
 
-- (id) initFromGitObject:(GITObject *)object {
+- (id) initWithGitObject:(GITObject *)object {
 	if (! [super init])
 		return nil;
 
