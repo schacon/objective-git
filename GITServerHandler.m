@@ -6,6 +6,8 @@
 #define NULL_SHA @"0000000000000000000000000000000000000000"
 #define CAPABILITIES @" report-status delete-refs "
 
+#define DEFAULT_GIT_PORT 9418 
+
 #define PACK_SIGNATURE 0x5041434b	/* "PACK" */
 #define PACK_VERSION 2
 
@@ -28,6 +30,9 @@
 
 @implementation GITServerHandler
 
+@synthesize remoteURL;
+@synthesize workingDir;
+
 @synthesize inStream;
 @synthesize outStream;
 @synthesize gitRepo;
@@ -38,23 +43,21 @@
 
 @synthesize capabilitiesSent;
 
-- (id) initWithURL:(NSURL *)gitURL;
-{
-	
-}
-
-- (id) initWithRepo:(GITRepo *)repo input:(NSInputStream *)sin output:(NSOutputStream *)sout;
+- (id) initWithURL:(NSURL *) gitURL workingDir:(NSString *) wd;
 {
 	if (! [super init])
 		return nil;
 	
-	[self setGitRepo:repo];
-	[self setInStream:sin];
-	[self setOutStream:sout];
+	[self setRemoteURL:gitURL];
 	
-	// [self handleRequest];
+	// initialize ivars for collections
 	
-	return self;
+	return self;	
+}
+
+- (id) initWithURL:(NSURL *) gitURL;
+{
+	return [self initWithURL:gitURL workingDir:nil];
 }
 
 - (void) dealloc;
@@ -67,6 +70,53 @@
 	[gitRepo release];
 	[super dealloc];
 }
+
+- (NSString *) tmpWorkingDir;
+{
+	NSString *tmpWorkingDir = nil;
+	// generate a unique string
+	CFUUIDRef uuid = CFUUIDCreate(NULL);
+	NSString *uString = (NSString *)CFUUIDCreateString(NULL, uuid);
+	CFRelease(uuid);
+	
+	NSString *tempDir = NSTemporaryDirectory();
+	if (tempDir != nil)
+		tmpWorkingDir = [NSTemporaryDirectory() stringByAppendingPathComponent:uString];
+	
+	[uString release];
+	return tmpWorkingDir;
+}
+
+- (void) connectToURL:(NSURL *) gitURL;
+{		
+	// typical git:// url =  git://<host>/path/to/repo.git
+	if ([[gitURL scheme] isEqualToString:@"git"]) {
+		NSHost *host = [NSHost hostWithName:[gitURL host]];
+		NSUInteger port = [gitURL port] || DEFAULT_GIT_PORT;
+		//NSString *repoPath = [gitURL path];
+		//NSString *repoName = [repoPath lastPathComponent];
+
+		// *** not available for iPhone ***
+		// need to use CFStream or switch to SmallSockets...
+		// for now quick and dirty - this will change anyway
+		NSInputStream *sin;
+		NSOutputStream *sout;
+		[NSStream getStreamsToHost:host
+							  port:port 
+					   inputStream:&sin 
+					  outputStream:&sout];
+		[self setInStream:sin];
+		[self setOutStream:sout];
+	} else if ([gitURL isFileURL]) {
+		NSString *gitPath = [gitURL path];
+		[self setInStream:[NSInputStream inputStreamWithFileAtPath:gitPath]];
+		[self setOutStream:[NSOutputStream outputStreamToFileAtPath:gitPath append:YES]];
+	}
+	
+	if (inStream && outStream)
+		[self handleRequest];
+}
+
 
 /* 
  * initiates communication with an incoming request
@@ -89,8 +139,17 @@
 	NSLog(@"header: %@ : %@ : %@", command, repo, hostpath);
 	
 	// create local repository
-	//NSString *dir = [gitPath stringByAppendingPathComponent:repo];
-	//[gitRepo openRepo:dir];
+	if ([self workingDir] == nil) {
+		[self setWorkingDir:[self tmpWorkingDir]];
+		NSLog(@"Using temporary working dir: %@", [self workingDir]);
+	}
+	
+	NSError *repoError;
+	NSString *dir = [[self workingDir] stringByAppendingString:repo];
+	GITRepo *repoObj = [GITRepo repoWithPath:dir error:&repoError];
+	
+	NSAssert(repoObj != nil, @"Could not initialize local Git repository");
+	[self setGitRepo:repoObj];
 	
 	if([command isEqualToString: @"git-receive-pack"]) {		// git push  //
 		[self receivePack:repository];
@@ -281,7 +340,7 @@
 - (void) gatherObjectShasFromTree:(NSString *)shaValue 
 {
 	GITObject *gitObj = [gitRepo objectFromSha:shaValue];
-	GITTree *tree = [[GITTree alloc] initFromGitObject:gitObj];
+	GITTree *tree = [[GITTree alloc] initWithGitObject:gitObj];
 	[refDict setObject:@"/" forKey:shaValue];
 	
 	NSArray *treeEntries = [NSArray arrayWithArray:[tree treeEntries]];
@@ -581,7 +640,6 @@
 
 - (NSString *) readServerSha 
 {
-	char sha[41];
 	uint8_t rawsha[20];
 	[inStream read:rawsha maxLength:20];
 	return [GITRepo unpackSha1Hex:rawsha];

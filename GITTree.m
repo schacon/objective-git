@@ -14,6 +14,11 @@
 @synthesize	treeEntries;
 @synthesize gitObject;
 
++ (id) treeWithGitObject:(GITObject *)object;
+{
+	return [[[self alloc] initWithGitObject:object] autorelease];
+}
+
 - (id) initFromGitObject:(GITObject *)object {
 	if (! [super init])
 		return nil;

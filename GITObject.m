@@ -19,7 +19,12 @@
 
 @synthesize rawContentLen;
 
-- (id) initFromRaw:(NSData *)rawData withSha:(NSString *)shaValue
++ (id) objectWithRaw:(NSData *)rawData sha:(NSString *)shaValue;
+{
+	return [[[self alloc] initWithRaw:rawData sha:shaValue] autorelease];
+}
+
+- (id) initWithRaw:(NSData *)rawData sha:(NSString *)shaValue
 {
 	if (! [super init])
 		return nil;

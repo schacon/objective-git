@@ -16,7 +16,9 @@
 @property(copy, readwrite) NSArray   *treeEntries;
 @property(retain, readwrite) GITObject *gitObject;
 
-- (id) initFromGitObject:(GITObject *)object;
++ (id) treeWithGitObject:(GITObject *)object;
+
+- (id) initWithGitObject:(GITObject *)object;
 - (void) parseContent;
 - (void) logObject;
 

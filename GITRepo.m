@@ -18,6 +18,12 @@
 @synthesize workingDir;
 @synthesize bare;
 
++ (id) repoWithPath:(NSString *) gitDir error:(NSError **) error;
+{
+	id newRepo = [[self alloc] initWithPath:gitDir error:error];
+	return [newRepo autorelease];
+}
+
 - (id) initWithPath:(NSString *) gitDir bare:(BOOL) bareRepo error:(NSError **) error; 
 {
 	if (![super init])
@@ -195,7 +201,7 @@
 - (GITCommit *) commitFromSha:(NSString *)sha1;
 {
 	GITObject *obj = [self objectFromSha:sha1];
-	GITCommit *commit = [[GITCommit alloc] initFromGitObject:obj];
+	GITCommit *commit = [[GITCommit alloc] initWithGitObject:obj];
 	return [commit autorelease];
 }
 
@@ -204,7 +210,7 @@
 	NSString *objectPath = [self looseObjectPathBySha:sha1];
 	//NSLog(@"READ FROM FILE: %@", objectPath);
 	NSFileHandle *fh = [NSFileHandle fileHandleForReadingAtPath:objectPath];
-	GITObject *obj = [[GITObject alloc] initFromRaw:[fh availableData] withSha:sha1];
+	GITObject *obj = [[GITObject alloc] initWithRaw:[fh availableData] withSha:sha1];
 	return [obj autorelease];	
 }
 

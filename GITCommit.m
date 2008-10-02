@@ -17,7 +17,12 @@
 @synthesize message;
 @synthesize gitObject;
 
-- (id) initFromGitObject:(GITObject *)gObject {
++ (id) commitWithGitObject:(GITObject *)gObject;
+{
+	return [[[self alloc] initWithGitObject:gObject] autorelease];
+}
+
+- (id) initWithGitObject:(GITObject *)gObject {
 	if (! [super init])
 		return nil;
 
@@ -26,10 +31,10 @@
 	return self;
 }
 
-- (id) initFromRaw:(NSData *)rawData withSha:(NSString *)shaValue
+- (id) initWithRaw:(NSData *)rawData sha:(NSString *)shaValue
 {
-	GITObject *gObj = [[[GITObject alloc] initFromRaw:rawData withSha:shaValue] autorelease];
-	return [self initFromGitObject:gObj];
+	GITObject *gObj = [[[GITObject alloc] initWithRaw:rawData sha:shaValue] autorelease];
+	return [self initWithGitObject:gObj];
 }
 
 - (void) dealloc;

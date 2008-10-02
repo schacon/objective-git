@@ -29,8 +29,10 @@
 @property(copy, readonly) NSMutableDictionary *committer;
 - (void) setCommitter:(NSDictionary *) newAuthor;
 
-- (id) initFromGitObject:(GITObject *)gObject;
-- (id) initFromRaw:(NSData *)rawData withSha:(NSString *)shaValue;
++ (id) commitWithGitObject:(GITObject *)gObject;
+
+- (id) initWithGitObject:(GITObject *)gObject;
+- (id) initWithRaw:(NSData *)rawData sha:(NSString *)shaValue;
 - (void) parseContent;
 - (void) logObject;
 - (NSArray *) authorArray; 

@@ -25,6 +25,8 @@
 + (int) gitUnpackHex:(const unsigned char *)rawsha fillSha:(char *)sha1;
 + (int) isAlpha:(unsigned char)n;
 
++ (id) repoWithPath:(NSString *) gitDir error:(NSError **) error;
+
 - (id) initWithPath:(NSString *) gitDir;
 - (id) initWithPath:(NSString *) gitDir error:(NSError **) error;
 - (id) initWithPath:(NSString *) gitDir bare:(BOOL) bareRepo error:(NSError **) error;

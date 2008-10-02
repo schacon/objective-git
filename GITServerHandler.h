@@ -12,6 +12,12 @@
 #import "GITObject.h"
 
 @interface GITServerHandler : NSObject {
+	NSURL *remoteURL;
+	NSString *workingDir;
+	
+	// use SmallSockets library?
+	//BufferedSocket *gitSocket;
+	
 	NSInputStream *inStream;
 	NSOutputStream *outStream;
 	GITRepo *gitRepo;
@@ -23,6 +29,9 @@
 	int	capabilitiesSent; // Why not use a BOOL here?
 }
 
+@property(copy, readwrite) NSURL *remoteURL;
+@property(copy, readwrite) NSString *workingDir;
+
 @property(retain, readwrite) NSInputStream *inStream;	
 @property(retain, readwrite) NSOutputStream *outStream;	
 @property(retain, readwrite) GITRepo *gitRepo;
@@ -33,9 +42,8 @@
 
 @property(assign, readwrite) int capabilitiesSent;
 
-- (id) initWithRepo:(GITRepo *)repo input:(NSInputStream *)sin output:(NSOutputStream *)sout;
 
-- (void) initWithGit:(GITRepo *)git gitPath:(NSString *)gitRepoPath input:(NSInputStream *)streamIn output:(NSOutputStream *)streamOut;
+//- (void) initWithGit:(GITRepo *)git gitPath:(NSString *)gitRepoPath input:(NSInputStream *)streamIn output:(NSOutputStream *)streamOut;
 - (void) handleRequest;
 
 - (void) uploadPack:(NSString *)repositoryName;

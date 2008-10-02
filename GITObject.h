@@ -24,7 +24,9 @@
 @property(copy, readwrite) NSData   *raw;	
 @property(copy, readwrite) NSData   *contentsData;	
 
-- (id) initFromRaw:(NSData *)rawData withSha:(NSString *)shaValue;
++ (id) objectWithRaw:(NSData *)rawData sha:(NSString *)shaValue;
+
+- (id) initWithRaw:(NSData *)rawData sha:(NSString *)shaValue;
 - (void) parseRaw;
 
 - (NSString *) contents;
