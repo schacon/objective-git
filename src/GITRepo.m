@@ -28,7 +28,7 @@
 {
 	if (![super init])
 		return nil;
-	
+		
 	[self setBare:bareRepo];
 	
 	NSString *gitPath = [gitDir stringByStandardizingPath];
@@ -44,7 +44,7 @@
 	
 	// bare repo: repo.git
 	if ([NSFileManager directoryExistsAtPath:gitPath] &&
-		([gitPath pathExtension] == @"git" || bareRepo)) {
+		([[gitPath pathExtension] isEqualToString:@"git"] || bareRepo)) {
 		[self setPath:gitPath];
 		[self setBare:YES];
 		return self;
@@ -52,9 +52,8 @@
 	
 	// repo needs to be initialized
 	if (![NSFileManager fileExistsAtPath:gitPath]) {
+		[self setPath:gitPath];
 		if ([self createGitRepoAtPath:gitPath error:error]) {
-			[self setPath:gitPath];
-			[self setBare:YES];
 			return self;
 		} else {
 			return nil;
@@ -73,7 +72,7 @@
 
 - (id) initWithPath:(NSString *) gitDir error:(NSError **) error;
 {
-	return [self initWithPath:gitDir bare:NO error:error];
+	return [self initWithPath:gitDir bare:YES error:error];
 }
 
 - (void) dealloc;
@@ -89,13 +88,16 @@
 // Utility methods for creating git subdirs
 - (BOOL) createGitSubDir:(NSString *) subPath error:(NSError **) error;
 {
-	NSString *gitPath = [[self path] stringByAppendingString:subPath];
+	NSString *gitPath = [[self path] stringByAppendingPathComponent:subPath];
 	
 	NSFileManager *fm = [NSFileManager defaultManager];
 	BOOL success = [fm createDirectoryAtPath:gitPath
 				 withIntermediateDirectories:YES 
 								  attributes:nil
 									   error:error];
+	if (!success)
+		NSLog(@"ERROR: could not create %@", gitPath);
+	
 	return success;
 }
 
@@ -113,7 +115,7 @@
 				  [self createGitSubDir:@"branches" error:error] &&
 				  [self createGitSubDir:@"hooks" error:error] &&
 				  [self createGitSubDir:@"info" error:error];
-	
+	 
 	if (createdDirs) {
 		NSString *config = @"[core]\n\t"
 		@"repositoryformatversion = 0\n\t"
@@ -129,6 +131,9 @@
 							   atomically:YES 
 								 encoding:NSUTF8StringEncoding 
 								    error:error];
+		
+		NSLog(@"wrote config");
+		
 		wroteHead = [head writeToFile:headFile 
 						   atomically:YES 
 							 encoding:NSUTF8StringEncoding 
@@ -152,6 +157,14 @@
 	return [[self path] stringByAppendingPathComponent:@"refs"];
 }
 
+- (NSDictionary *) dictionaryWithRefName:(NSString *) aName sha:(NSString *) shaString;
+{
+	NSDictionary *refInfo = [NSDictionary dictionaryWithObjectsAndKeys:
+							 aName, @"name",
+							 shaString, @"sha", nil];
+	return refInfo;
+}
+
 - (NSArray *) refs;
 {
 	NSMutableArray *refs = [[NSMutableArray alloc] init];
@@ -161,22 +174,28 @@
 	
 	NSFileManager *fm = [NSFileManager defaultManager];
 	if ([NSFileManager directoryExistsAtPath:refsPath]) {
-		NSEnumerator *e = [[fm subpathsAtPath:refsPath] objectEnumerator];
-		NSString *thisRef;
+		NSEnumerator *e = [fm enumeratorAtPath:refsPath];
+		NSString *thisRef, *r;
 		while ( (thisRef = [e nextObject]) ) {
 			tempRef = [refsPath stringByAppendingPathComponent:thisRef];
 			thisRef = [@"refs" stringByAppendingPathComponent:thisRef];
 			
-			if ([NSFileManager directoryExistsAtPath:tempRef]) {
-				thisSha = [[NSString alloc] stringWithContentsOfFile:tempRef
-															encoding:NSASCIIStringEncoding 
-															   error:nil];
-				[refs addObject:[NSArray arrayWithObjects:thisRef,thisSha,nil]];
-				[thisSha release];
+			BOOL isDir;
+			if ([fm fileExistsAtPath:tempRef isDirectory:&isDir] && !isDir) {
+				NSString *shaString = [[NSString alloc] initWithContentsOfFile:tempRef
+														  encoding:NSASCIIStringEncoding 
+															 error:nil];
+				thisSha = [shaString stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+				[shaString release];
 				
-				if([thisRef isEqualToString:@"refs/heads/master"]) {
-					[refs addObject:[NSArray arrayWithObjects:@"HEAD",thisSha,nil]];
-					[thisSha release];
+				NSDictionary *refInfo = [NSDictionary dictionaryWithObjectsAndKeys:
+										 thisRef, @"name",
+										 thisSha, @"sha", nil];
+				
+				[refs addObject:[self dictionaryWithRefName:thisRef sha:thisSha]];
+				
+				if([thisRef hasSuffix:@"refs/heads/master"]) {
+					[refs addObject:[self dictionaryWithRefName:@"HEAD" sha:thisSha]];
 				}
 			}
 		}
@@ -260,7 +279,6 @@
 	NSString *dir = [NSString stringWithFormat: @"%@/objects/%@", [self path], looseSubDir];
 	
 	NSFileManager *fm = [NSFileManager defaultManager];
-
 	if (! [NSFileManager directoryExistsAtPath:dir]) {
 		[fm createDirectoryAtPath:dir attributes:nil];
 	}
@@ -283,7 +301,7 @@
 	CC_SHA1([object bytes], [object length], rawsha);
 	
 	// write object to file
-	shaStr = [self unpackSha1Hex:rawsha];
+	shaStr = [[self class] unpackSha1Hex:rawsha];
 	objectPath = [self looseObjectPathBySha:shaStr];
 	//NSData *compress = [[NSData dataWithBytes:[object bytes] length:[object length]] compressedData];
 	NSData *compressedData = [object compressedData];

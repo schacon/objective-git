@@ -37,6 +37,7 @@
 - (NSString *) refsPath;
 - (NSArray *) refs;
 - (NSUInteger) countOfRefs;
+- (NSDictionary *) dictionaryWithRefName:(NSString *) aName sha:(NSString *) shaString;
 - (id) objectInRefsAtIndex:(NSUInteger) i;
 
 - (BOOL) updateRef:(NSString *)refName toSha:(NSString *)toSha;

@@ -399,8 +399,8 @@
 	NSString *refName, *shaValue;
 	NSArray *thisRef;
 	while ( (thisRef = [e nextObject]) ) {
-		refName  = [thisRef objectAtIndex:0];
-		shaValue = [thisRef objectAtIndex:1];
+		refName  = [thisRef valueForKey:@"name"];
+		shaValue = [thisRef valueForKey:@"sha"];
 		[self sendRef:refName sha:shaValue];
 	}
 	
