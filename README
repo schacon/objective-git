@@ -9,6 +9,19 @@ and packed objects, and to provide an input stream handler that can negotiate
 the server side of the git client/server protocol.
 
 
+Dependencies
+===================
+
+The only strict requirement is an Objective-C 2.0 compiler.  The code in 'src'
+is compatible with both OS X (>= 10.5.x) and iPhone platforms.  For convenience, 
+you can build an OS X framework in either Xcode or from the command line using [nuke][],
+which is part of [Nu][]. The preliminary test suite is written in [Nu][], but 
+this may change in the future.
+
+[Nu]: http://programming.nu
+[nuke]: http://programming.nu/nuke
+
+
 Credits
 ===================
 A bit of this code is borrowed from the Git.git project and the NSData 
