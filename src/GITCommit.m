@@ -140,9 +140,13 @@
 	name_email_date = [authorString componentsSeparatedByCharactersInSet:
 					   [NSCharacterSet characterSetWithCharactersInString:@"<>"]];
 	
-	NSString *nameVal  = [name_email_date objectAtIndex: 0];
-	NSString *emailVal = [name_email_date objectAtIndex: 1];
-	NSString *dateVal  = [name_email_date objectAtIndex: 2];
+	NSCharacterSet *trimSet = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+	NSString *nameVal  = [[name_email_date objectAtIndex: 0]
+						  stringByTrimmingCharactersInSet:trimSet];
+	NSString *emailVal = [[name_email_date objectAtIndex: 1]
+						  stringByTrimmingCharactersInSet:trimSet];
+	NSString *dateVal  = [[name_email_date objectAtIndex: 2]
+						  stringByTrimmingCharactersInSet:trimSet];
 	NSDate   *dateDateVal;
 	dateDateVal = [NSDate dateWithTimeIntervalSince1970:[dateVal doubleValue]];
 	

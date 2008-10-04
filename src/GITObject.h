@@ -34,4 +34,6 @@
 - (void) setRaw:(NSData *) rawData inflate:(BOOL) inflate;
 - (NSData *) inflateRaw:(NSData *)rawData;
 
+- (NSComparisonResult) isEqualToObject:(GITObject *) otherObject;
+
 @end

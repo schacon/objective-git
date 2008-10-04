@@ -62,6 +62,8 @@
 	int i, j, state;
 	state = 1;
 	
+	//NSLog(@"%s", contents);
+	
 	for(i = 0; i < contentLen - 1; i++) {
 		if(contents[i] == 0) {
 			state = 1;
@@ -78,6 +80,7 @@
 			nameStr = [[NSString alloc] initWithBytes:name length:namePtr encoding:NSUTF8StringEncoding];	
 			
 			entry = [NSArray arrayWithObjects:modeStr, nameStr, shaStr, nil];
+			// NSLog(@"%@, %@, %@", shaStr, modeStr, nameStr);
 			[shaStr release];
 			[modeStr release];
 			[nameStr release];

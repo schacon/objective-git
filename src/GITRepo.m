@@ -18,6 +18,12 @@
 @synthesize workingDir;
 @synthesize bare;
 
++ (BOOL) isShaValid:(NSString *) shaString;
+{
+	// should also check for invalid chars
+	return ([shaString length] == 40);
+}
+
 + (id) repoWithPath:(NSString *) gitDir error:(NSError **) error;
 {
 	id newRepo = [[self alloc] initWithPath:gitDir error:error];
@@ -131,9 +137,7 @@
 							   atomically:YES 
 								 encoding:NSUTF8StringEncoding 
 								    error:error];
-		
-		NSLog(@"wrote config");
-		
+				
 		wroteHead = [head writeToFile:headFile 
 						   atomically:YES 
 							 encoding:NSUTF8StringEncoding 
@@ -175,7 +179,7 @@
 	NSFileManager *fm = [NSFileManager defaultManager];
 	if ([NSFileManager directoryExistsAtPath:refsPath]) {
 		NSEnumerator *e = [fm enumeratorAtPath:refsPath];
-		NSString *thisRef, *r;
+		NSString *thisRef;
 		while ( (thisRef = [e nextObject]) ) {
 			tempRef = [refsPath stringByAppendingPathComponent:thisRef];
 			thisRef = [@"refs" stringByAppendingPathComponent:thisRef];
@@ -187,11 +191,7 @@
 															 error:nil];
 				thisSha = [shaString stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 				[shaString release];
-				
-				NSDictionary *refInfo = [NSDictionary dictionaryWithObjectsAndKeys:
-										 thisRef, @"name",
-										 thisSha, @"sha", nil];
-				
+								
 				[refs addObject:[self dictionaryWithRefName:thisRef sha:thisSha]];
 				
 				if([thisRef hasSuffix:@"refs/heads/master"]) {
@@ -219,18 +219,28 @@
 
 - (GITCommit *) commitFromSha:(NSString *)sha1;
 {
+	GITCommit *commit = nil;
 	GITObject *obj = [self objectFromSha:sha1];
-	GITCommit *commit = [[GITCommit alloc] initWithGitObject:obj];
+	if (obj != nil)
+		commit = [[GITCommit alloc] initWithGitObject:obj];
 	return [commit autorelease];
 }
 
 - (GITObject *) objectFromSha:(NSString *)sha1;
 {
-	NSString *objectPath = [self looseObjectPathBySha:sha1];
+	if (! [self pathForLooseObjectWithSha:sha1])
+		return nil;
+	
+	NSString *objectPath = [self pathForLooseObjectWithSha:sha1];
 	//NSLog(@"READ FROM FILE: %@", objectPath);
 	NSFileHandle *fh = [NSFileHandle fileHandleForReadingAtPath:objectPath];
 	GITObject *obj = [[GITObject alloc] initWithRaw:[fh availableData] sha:sha1];
 	return [obj autorelease];	
+}
+
+- (NSMutableArray *) commitsFromSha:(NSString *)shaValue;
+{
+	return [self commitsFromSha:shaValue limit:0];
 }
 
 - (NSMutableArray *) commitsFromSha:(NSString *)shaValue limit:(NSUInteger)commitSize;
@@ -261,7 +271,7 @@
 - (BOOL) hasObject: (NSString *)sha1;
 {
 	NSString *objPath;
-	objPath = [self looseObjectPathBySha:sha1];
+	objPath = [self pathForLooseObjectWithSha:sha1];
 
 	if ([NSFileManager fileExistsAtPath:objPath]) {
 		return YES;
@@ -271,8 +281,11 @@
 	return NO;
 }
 
-- (NSString *) looseObjectPathBySha: (NSString *)shaValue;
+- (NSString *) pathForLooseObjectWithSha:(NSString *) shaValue;
 {
+	if (! [GITRepo isShaValid:shaValue])
+		return nil;
+	
 	NSString *looseSubDir   = [shaValue substringWithRange:NSMakeRange(0, 2)];
 	NSString *looseFileName = [shaValue substringWithRange:NSMakeRange(2, 38)];
 	
@@ -302,7 +315,7 @@
 	
 	// write object to file
 	shaStr = [[self class] unpackSha1Hex:rawsha];
-	objectPath = [self looseObjectPathBySha:shaStr];
+	objectPath = [self pathForLooseObjectWithSha:shaStr];
 	//NSData *compress = [[NSData dataWithBytes:[object bytes] length:[object length]] compressedData];
 	NSData *compressedData = [object compressedData];
 	

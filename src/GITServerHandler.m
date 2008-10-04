@@ -108,6 +108,7 @@
 		[self setInStream:sin];
 		[self setOutStream:sout];
 	} else if ([gitURL isFileURL]) {
+		// Not sure that this will work properly...
 		NSString *gitPath = [gitURL path];
 		[self setInStream:[NSInputStream inputStreamWithFileAtPath:gitPath]];
 		[self setOutStream:[NSOutputStream outputStreamToFileAtPath:gitPath append:YES]];
@@ -397,7 +398,7 @@
 	
 	NSEnumerator *e = [refs objectEnumerator];
 	NSString *refName, *shaValue;
-	NSArray *thisRef;
+	NSDictionary *thisRef;
 	while ( (thisRef = [e nextObject]) ) {
 		refName  = [thisRef valueForKey:@"name"];
 		shaValue = [thisRef valueForKey:@"sha"];
@@ -415,6 +416,7 @@
 	if(capabilitiesSent) 
 		sendData = [[NSString alloc] initWithFormat:@"%@ %@\n", shaString, refName];
 	else
+		// Can '\0' be in a string or does it need to be a real null byte?
 		sendData = [[NSString alloc] initWithFormat:@"%@ %@\0%@\n", shaString, refName, CAPABILITIES];
 	[self writeServer:sendData];
 	[sendData release];

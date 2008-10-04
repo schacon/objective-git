@@ -60,7 +60,7 @@
 	[self setType:[headerChunks objectAtIndex:0]];
 	[self setSize:[[headerChunks objectAtIndex:1] intValue]];
 	
-	NSUInteger contentOffset = strlen(bytes) + 2;
+	NSUInteger contentOffset = strlen(bytes) + 1;
 	rawContentLen = len - contentOffset;
 	NSRange contentRange = NSMakeRange(contentOffset, rawContentLen);
 	NSData *contentData = [[self raw] subdataWithRange:contentRange];
@@ -88,6 +88,11 @@
 - (NSData *) inflateRaw:(NSData *)rawData
 {
 	return [rawData decompressedData];
+}
+
+- (NSComparisonResult) isEqualToObject:(GITObject *) otherObject;
+{
+	return [[self raw] isEqualToData:[otherObject raw]];
 }
 
 @end

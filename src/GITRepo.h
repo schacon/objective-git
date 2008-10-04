@@ -45,9 +45,10 @@
 
 - (GITCommit *) commitFromSha:(NSString *)sha1;
 - (GITObject *) objectFromSha:(NSString *)sha1;
+- (NSMutableArray *) commitsFromSha:(NSString *)shaValue;
 - (NSMutableArray *) commitsFromSha:(NSString *)shaValue limit:(NSUInteger)commitSize;
 - (BOOL) hasObject: (NSString *)sha1;
-- (NSString *) looseObjectPathBySha: (NSString *)shaValue;
+- (NSString *) pathForLooseObjectWithSha: (NSString *)shaValue;
 - (BOOL) writeObject:(NSData *)objectData withType:(NSString *)type size:(NSUInteger)size;
 
 @end
