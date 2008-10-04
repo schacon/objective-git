@@ -33,21 +33,23 @@
 (compilation-tasks)
 (framework-tasks)
 
+;; Copying framework headers seems to be missing from Nu - add it here for now...
+(task "copy_framework_headers" => @framework_headers_dir)
+(@public_headers each:
+     (do (h)
+         (set filename (h lastPathComponent))
+         (set targetFile (@framework_headers_dir stringByAppendingPathComponent:filename))
+         (set sourceFile h)
+         (file targetFile => h is
+               (SH "cp -p '#{sourceFile}' '#{targetFile}'"))
+         (task "copy_framework_headers" => targetFile @framework_headers_dir)))
+(task "framework" => "copy_framework_headers")
+
+
+;; Standard tasks
 (task "clobber" => "clean" is
       (SH "rm -rf #{@framework_dir}")
       (SH "rm -rf build")) ;; @framework_dir is defined by the nuke framework-tasks macro
-
-(task "copy_headers" => @framework_headers_dir)
-(@public_headers each:
-     (do (h)
-          (set filename (h lastPathComponent))
-          (set targetFile (@framework_headers_dir stringByAppendingPathComponent:filename))
-          (set sourceFile h)
-          (file targetFile => h @framework_headers_dir is
-               (SH "cp -p '#{sourceFile}' '#{targetFile}'"))
-          (task "copy_headers" => targetFile)))
-
-(task "framework_links" => "copy_headers")
 
 (task "default" => "framework")
 
@@ -56,4 +58,4 @@
       (SH "ditto #{@framework}.framework /Library/Frameworks/#{@framework}.framework"))
 
 (task "test" => "framework" is
-      (SH "nutest tests/test_*.nu"))
+      (SH "nutest NuTests/test_*.nu"))
