@@ -1,6 +1,6 @@
 //
 //  GITServerHandler.m
-//  ObjGit
+//  ObjectiveGit
 //
 
 #define NULL_SHA @"0000000000000000000000000000000000000000"

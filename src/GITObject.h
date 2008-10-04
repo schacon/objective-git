@@ -1,10 +1,7 @@
 //
 //  GITObject.h
 //  ObjectiveGit
-//
-//  Created by chapbr on 10/1/08.
-//  Copyright 2008 __MyCompanyName__. All rights reserved.
-//
+
 
 #import <Foundation/Foundation.h>
 

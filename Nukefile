@@ -18,6 +18,9 @@
 (set @m_files     (filelist "^src/.*.m$"))
 (set @c_files     (filelist "^src/.*.c$"))
 
+;; arch
+(set @arch '("i386" "ppc"))
+
 ;; framework description
 (set @framework "ObjectiveGit")
 (set @framework_identifier   "com.yourcompany.ObjectiveGit")

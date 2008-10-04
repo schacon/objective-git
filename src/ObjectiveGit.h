@@ -1,9 +1,8 @@
 /*
  *  ObjectiveGit.h
- *  ObjectiveGit
+ *  ObjectiveGit.framework
  *
- *  Created by chapbr on 10/2/08.
- *  Copyright 2008 __MyCompanyName__. All rights reserved.
+ * Public headers
  *
  */
 

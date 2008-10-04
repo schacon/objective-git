@@ -1,10 +1,7 @@
 //
 //  GITRepo.h
 //  ObjectiveGit
-//
-//  Created by chapbr on 9/30/08.
-//  Copyright 2008 __MyCompanyName__. All rights reserved.
-//
+
 
 #import <Foundation/Foundation.h>
 #import "GITObject.h"
