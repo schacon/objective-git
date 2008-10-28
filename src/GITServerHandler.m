@@ -45,7 +45,7 @@
 
 - (id) initWithURL:(NSURL *) gitURL workingDir:(NSString *) wd;
 {
-	if (! [super init])
+	if (!(self = [super init]))
 		return nil;
 	
 	[self setRemoteURL:gitURL];

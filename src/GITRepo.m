@@ -29,7 +29,7 @@
 
 - (id) initWithPath:(NSString *) gitDir bare:(BOOL) bareRepo error:(NSError **) error; 
 {
-	if (![super init])
+	if (!(self = [super init]))
 		return nil;
 		
 	[self setBare:bareRepo];

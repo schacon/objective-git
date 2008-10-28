@@ -23,7 +23,7 @@
 
 - (id) initWithRaw:(NSData *)rawData sha:(NSString *)shaValue
 {
-	if (! [super init])
+	if (!(self = [super init]))
 		return nil;
 
 	[self setSha:shaValue];

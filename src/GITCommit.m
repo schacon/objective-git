@@ -20,7 +20,7 @@
 }
 
 - (id) initWithGitObject:(GITObject *)gObject {
-	if (! [super init])
+	if (!(self = [super init]))
 		return nil;
 
 	[self setGitObject:gObject];
